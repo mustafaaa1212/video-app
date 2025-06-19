@@ -5,13 +5,8 @@ import tempfile
 import shutil
 import subprocess
 from datetime import datetime
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email.mime.text import MIMEText
-from email import encoders
 import threading
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, send_file
 from werkzeug.utils import secure_filename
 
 # Configure logging
@@ -33,10 +28,8 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(SCREENSHOT_FOLDER, exist_ok=True)
 
-# Email configuration
-SENDER_EMAIL = "insanetrickster074@gmail.com"
-SENDER_PASSWORD = "lxldmwcvjvqicwgc"
-RECIPIENT_EMAIL = "mustafasadikot72@gmail.com"
+# Store processing results
+processing_results = {}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -86,61 +79,8 @@ def create_zip(source_dir, zip_path):
         logging.error(f"Error creating zip: {str(e)}")
         raise
 
-def send_email(zip_path, video_filename, interval, screenshot_count):
-    """Send email with zip attachment"""
-    try:
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = SENDER_EMAIL
-        msg['To'] = RECIPIENT_EMAIL
-        msg['Subject'] = f"Video Screenshots - {video_filename}"
-        
-        body = f"""Hello,
-
-Your video screenshot extraction has been completed successfully!
-
-Video: {video_filename}
-Screenshot Interval: {interval} seconds
-Total Screenshots: {screenshot_count}
-Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-Please find the screenshots attached as a zip file.
-
-Best regards,
-Video Screenshot Tool"""
-        
-        msg.attach(MIMEText(body, 'plain'))
-        
-        # Attach zip file
-        with open(zip_path, "rb") as attachment:
-            part = MIMEBase('application', 'octet-stream')
-            part.set_payload(attachment.read())
-        
-        encoders.encode_base64(part)
-        part.add_header(
-            'Content-Disposition',
-            f'attachment; filename= {os.path.basename(zip_path)}'
-        )
-        msg.attach(part)
-        
-        # Send email with proper error handling
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        # Enable less secure app access or use app passwords
-        server.login(SENDER_EMAIL, SENDER_PASSWORD)
-        text = msg.as_string()
-        server.sendmail(SENDER_EMAIL, RECIPIENT_EMAIL, text)
-        server.quit()
-        
-        logging.info(f"Email sent successfully to {RECIPIENT_EMAIL}")
-        return True
-        
-    except Exception as e:
-        logging.error(f"Error sending email: {str(e)}")
-        return False
-
-def process_video_task(video_path, interval, video_filename):
-    """Background task to process video and send email"""
+def process_video_task(video_path, interval, video_filename, process_id):
+    """Background task to process video"""
     temp_dir = None
     try:
         logging.info(f"Starting video processing for: {video_filename}")
@@ -153,6 +93,7 @@ def process_video_task(video_path, interval, video_filename):
         
         if screenshot_count == 0:
             logging.error("No screenshots were extracted")
+            processing_results[process_id] = {'status': 'error', 'message': 'No screenshots extracted'}
             return
         
         # Create zip file
@@ -161,20 +102,20 @@ def process_video_task(video_path, interval, video_filename):
         zip_path = os.path.join(SCREENSHOT_FOLDER, zip_filename)
         create_zip(temp_dir, zip_path)
         
-        # Send email
-        success = send_email(zip_path, video_filename, interval, screenshot_count)
+        # Store result for download
+        processing_results[process_id] = {
+            'status': 'completed',
+            'zip_file': zip_filename,
+            'screenshot_count': screenshot_count,
+            'video_name': video_filename,
+            'interval': interval
+        }
         
-        if success:
-            logging.info("Video processing completed successfully")
-        else:
-            logging.error("Video processing completed but email failed")
-        
-        # Clean up zip file after sending
-        if os.path.exists(zip_path):
-            os.remove(zip_path)
+        logging.info(f"Video processing completed successfully - {screenshot_count} screenshots")
             
     except Exception as e:
         logging.error(f"Error in video processing task: {str(e)}")
+        processing_results[process_id] = {'status': 'error', 'message': str(e)}
     finally:
         # Clean up temporary directory
         if temp_dir and os.path.exists(temp_dir):
@@ -196,6 +137,10 @@ def style():
 def script():
     return send_from_directory('.', 'script.js')
 
+@app.route('/test_script.js')
+def test_script():
+    return send_from_directory('.', 'test_script.js')
+
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
     try:
@@ -214,21 +159,25 @@ def upload_file():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"{timestamp}_{filename}"
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            unique_filename = f"{timestamp}_{filename}"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             file.save(filepath)
+            
+            # Generate unique process ID
+            process_id = f"{timestamp}_{filename.split('.')[0]}"
             
             # Start background processing
             thread = threading.Thread(
                 target=process_video_task, 
-                args=(filepath, interval, file.filename)
+                args=(filepath, interval, file.filename, process_id)
             )
             thread.daemon = True
             thread.start()
             
             return jsonify({
                 'success': True, 
-                'message': 'Video uploaded successfully! Screenshots are being processed and will be emailed to mustafasadikot72@gmail.com shortly.'
+                'message': 'Video uploaded successfully! Processing screenshots...',
+                'process_id': process_id
             })
         else:
             return jsonify({
@@ -242,6 +191,25 @@ def upload_file():
             'success': False, 
             'message': 'An error occurred while processing your request. Please try again.'
         })
+
+@app.route('/api/status/<process_id>')
+def check_status(process_id):
+    if process_id in processing_results:
+        return jsonify(processing_results[process_id])
+    else:
+        return jsonify({'status': 'processing'})
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    try:
+        filepath = os.path.join(SCREENSHOT_FOLDER, filename)
+        if os.path.exists(filepath):
+            return send_file(filepath, as_attachment=True)
+        else:
+            return jsonify({'error': 'File not found'}), 404
+    except Exception as e:
+        logging.error(f"Error downloading file: {str(e)}")
+        return jsonify({'error': 'Download failed'}), 500
 
 @app.errorhandler(413)
 def too_large(e):
