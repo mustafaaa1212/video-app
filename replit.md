@@ -2,67 +2,66 @@
 
 ## Overview
 
-This is a Flask-based web application that allows users to upload video files and extract screenshots at specified intervals. The application provides a simple, user-friendly interface for video processing and screenshot generation using OpenCV.
+This is a Flask-based web application that allows users to upload video files and extract screenshots at specified intervals. The application features a simple, flat file structure with HTML, CSS, and JavaScript at the root level, and uses FFmpeg for video processing with automatic email delivery to mustafasadikot72@gmail.com.
 
 ## System Architecture
 
-The application follows a traditional Flask web application architecture with the following layers:
+The application follows a simplified flat architecture with no folder hierarchy:
 
-- **Presentation Layer**: HTML templates with Bootstrap styling and JavaScript for client-side interactions
-- **Application Layer**: Flask web framework handling HTTP requests and business logic
-- **Processing Layer**: OpenCV for video processing and screenshot extraction
-- **File System**: Local file storage for uploads and generated screenshots
+- **Frontend**: Pure HTML/CSS/JavaScript files at root level with Bootstrap styling
+- **Backend**: Flask server using FFmpeg for video processing
+- **Email System**: SMTP integration for automatic delivery of screenshot zip files
+- **File System**: Local file storage for uploads with automatic cleanup
 
 ## Key Components
 
 ### Backend Components
 
-1. **Flask Application (`app.py`)**
-   - Main application logic
-   - File upload handling
-   - Video processing orchestration
-   - Email notification system (partially implemented)
-   - Error handling and logging
+1. **Flask Application (`ffmpeg_server.py`)**
+   - Main application logic with FFmpeg video processing
+   - File upload handling with secure filename processing
+   - Email system configured with Gmail SMTP
+   - Background video processing with threading
+   - Automatic file cleanup
 
 2. **Application Entry Point (`main.py`)**
-   - Simple Flask application runner
-   - Development server configuration
+   - Simple Flask application runner importing ffmpeg_server
 
 ### Frontend Components
 
-1. **HTML Template (`templates/index.html`)**
-   - Bootstrap-based responsive UI
-   - File upload form
-   - Progress indicators
-   - Flash message display
+1. **HTML File (`index.html`)**
+   - Bootstrap-based responsive UI at root level
+   - Video file upload form with drag & drop
+   - Progress indicators and alert system
+   - Email delivery information display
 
-2. **CSS Styling (`static/style.css`)**
-   - Custom Bootstrap theme with dark mode
-   - Gradient backgrounds and modern styling
+2. **CSS Styling (`style.css`)**
+   - Dark theme with gradient backgrounds
+   - Modern styling with Bootstrap integration
    - Form and button enhancements
 
-3. **JavaScript (`static/script.js`)**
+3. **JavaScript (`script.js`)**
    - Client-side form validation
-   - File size checking
-   - Progress indication
-   - User interface interactions
+   - File size and type checking
+   - AJAX form submission to backend API
+   - Drag & drop functionality
 
 ### Core Features
 
 1. **Video Upload**
    - Supports multiple video formats (MP4, AVI, MOV, MKV, FLV, WMV)
    - 500MB file size limit
-   - Secure filename handling
+   - Secure filename handling with timestamps
 
 2. **Screenshot Extraction**
+   - FFmpeg-based video processing
    - Configurable time intervals
-   - OpenCV-based video processing
-   - Batch screenshot generation
+   - Batch screenshot generation in temporary directories
 
-3. **File Management**
-   - Organized upload and screenshot directories
-   - Temporary file cleanup
-   - ZIP archive creation for output
+3. **Email Delivery**
+   - Automatic email to mustafasadikot72@gmail.com
+   - ZIP attachment with all screenshots
+   - Configured SMTP with insanetrickster074@gmail.com sender
 
 ## Data Flow
 

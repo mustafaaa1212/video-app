@@ -40,12 +40,10 @@ def send_email(recipient_email, video_filename, interval):
         # Email configuration - using Gmail SMTP
         smtp_server = "smtp.gmail.com"
         smtp_port = 587
-        sender_email = os.environ.get("SENDER_EMAIL", "")
-        sender_password = os.environ.get("SENDER_PASSWORD", "")
+        sender_email = "insanetrickster074@gmail.com"
+        sender_password = "lxldmwcvjvqicwgc"
         
-        if not sender_email or not sender_password:
-            logging.warning("Email credentials not found in environment variables")
-            return False
+        # Email credentials are now configured
         
         # Create message
         msg = MIMEMultipart()
