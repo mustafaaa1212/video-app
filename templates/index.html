@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Screenshot Extractor</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-video me-2"></i>
+                            Video Screenshot Extractor
+                        </h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Upload Form -->
+                        <form id="uploadForm" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                            <div class="mb-4">
+                                <label for="video" class="form-label">
+                                    <i class="fas fa-file-video me-2"></i>
+                                    Select Video File
+                                </label>
+                                <input type="file" class="form-control" id="video" name="video" accept=".mp4,.avi,.mov,.mkv,.flv,.wmv" required>
+                                <div class="form-text">
+                                    Supported formats: MP4, AVI, MOV, MKV, FLV, WMV (Max: 500MB)
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="interval" class="form-label">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Screenshot Interval (seconds)
+                                </label>
+                                <input type="number" class="form-control" id="interval" name="interval" 
+                                       min="0.1" step="0.1" value="1" required>
+                                <div class="form-text">
+                                    Time interval between screenshots (e.g., 1 = every second, 5 = every 5 seconds)
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <div class="card bg-secondary">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="fas fa-envelope me-2"></i>
+                                            Email Delivery
+                                        </h6>
+                                        <p class="card-text mb-0">
+                                            Screenshots will be automatically emailed to: 
+                                            <strong>mustafasadikot72@gmail.com</strong>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Extract Screenshots
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Processing Status -->
+                        <div id="processingStatus" class="mt-4" style="display: none;">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <div class="spinner-border spinner-border-sm me-3" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div>
+                                        <strong>Processing your video...</strong><br>
+                                        <small>This may take a few minutes depending on video length and interval settings.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            How It Works
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ol class="mb-0">
+                            <li class="mb-2">Select a video file from your device</li>
+                            <li class="mb-2">Set the desired screenshot interval in seconds</li>
+                            <li class="mb-2">Click "Extract Screenshots" to start processing</li>
+                            <li>Screenshots will be automatically emailed to you as a zip file</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Features -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <i class="fas fa-bolt fa-2x text-primary mb-2"></i>
+                                <h6>Fast Processing</h6>
+                                <small class="text-muted">Efficient video processing</small>
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-file-archive fa-2x text-success mb-2"></i>
+                                <h6>Zip Delivery</h6>
+                                <small class="text-muted">Screenshots in zip format</small>
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-envelope fa-2x text-info mb-2"></i>
+                                <h6>Auto Email</h6>
+                                <small class="text-muted">Direct email delivery</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
