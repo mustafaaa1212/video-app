@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 currentProcessId = data.process_id;
-                showAlert('Video uploaded successfully! Processing screenshots and sending email...', 'success');
+                showAlert('Video uploaded successfully! Processing screenshots...', 'success');
                 startStatusCheck();
             } else {
                 showAlert(data.message || 'An error occurred while processing your request.', 'error');
@@ -230,8 +230,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const downloadLink = `/download/${data.zip_file}`;
                 const emailStatus = data.email_sent ? 
-                    '<i class="fas fa-check-circle text-success me-1"></i>Email sent to mustafasadikot72@gmail.com' : 
-                    '<i class="fas fa-exclamation-triangle text-warning me-1"></i>Email delivery failed';
+                    '<i class="fas fa-check-circle text-success me-1"></i> Thank you!' : 
+                    '<i class="fas fa-exclamation-triangle text-warning me-1"></i>Failed';
                 
                 showAlert(`
                     <strong>Processing Complete!</strong><br>
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div>
                         <strong>Processing your video...</strong><br>
-                        <small>Extracting screenshots and preparing email delivery...</small>
+                        <small>Extracting screenshots...</small>
                     </div>
                 </div>
             `;
