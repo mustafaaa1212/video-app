@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showAlert('Video uploaded successfully! Screenshots are being processed and will be emailed to you shortly.', 'success');
+                showAlert('Video uploaded successfully! Screenshots are being processed...', 'success');
             } else {
                 showAlert(data.message || 'An error occurred while processing your request.', 'error');
             }
